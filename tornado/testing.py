@@ -253,12 +253,14 @@ class AsyncTestCase(unittest.TestCase):
 
     def run(self, result=None):
         with ExceptionStackContext(self._handle_exception):
-            super(AsyncTestCase, self).run(result)
+            test_run_result = super(AsyncTestCase, self).run(result)
         # As a last resort, if an exception escaped super.run() and wasn't
         # re-raised in tearDown, raise it here.  This will cause the
         # unittest run to fail messily, but that's better than silently
         # ignoring an error.
         self.__rethrow()
+        # return the result from the testcase for use if it's wrapped in a decorator
+        return test_run_result
 
     def stop(self, _arg=None, **kwargs):
         """Stops the `.IOLoop`, causing one pending (or future) call to `wait()`
