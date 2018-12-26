@@ -19,7 +19,6 @@
    .. automethod:: IOLoop.run_sync
    .. automethod:: IOLoop.close
    .. automethod:: IOLoop.instance
-   .. automethod:: IOLoop.initialized
    .. automethod:: IOLoop.install
    .. automethod:: IOLoop.clear_instance
 
@@ -46,14 +45,6 @@
    .. automethod:: IOLoop.time
    .. autoclass:: PeriodicCallback
       :members:
-
-   Debugging and error handling
-   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-   .. automethod:: IOLoop.handle_callback_exception
-   .. automethod:: IOLoop.set_blocking_signal_threshold
-   .. automethod:: IOLoop.set_blocking_log_threshold
-   .. automethod:: IOLoop.log_stack
 
    Methods for subclasses
    ^^^^^^^^^^^^^^^^^^^^^^

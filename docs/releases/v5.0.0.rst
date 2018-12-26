@@ -1,7 +1,7 @@
 What's new in Tornado 5.0
 =========================
 
-In progress
+Mar 5, 2018
 -----------
 
 Highlights
@@ -15,8 +15,9 @@ Highlights
   Tornado. While care has been taken to minimize the disruption from
   this change, code changes may be required for compatibility with
   Tornado 5.0, as detailed in the following section.
-- Support for Python 2.7 and 3.4 are deprecated; Tornado 6.0 will
-  require Python 3.5+.
+- Tornado 5.0 supports Python 2.7.9+ and 3.4+. Python 2.7 and 3.4 are
+  deprecated and support for them will be removed in Tornado 6.0,
+  which will require Python 3.5+.
 
 Backwards-compatibility notes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -77,6 +78,11 @@ Other notes
   longer required on Python 2.7.
 - Python 3.6 or higher is recommended, because it features more
   efficient garbage collection of `asyncio.Future` objects.
+
+`tornado.auth`
+~~~~~~~~~~~~~~
+
+- `.GoogleOAuth2Mixin` now uses a newer set of URLs.
 
 `tornado.autoreload`
 ~~~~~~~~~~~~~~~~~~~~
@@ -140,6 +146,8 @@ Other notes
 `tornado.httpserver`
 ~~~~~~~~~~~~~~~~~~~~
 
+- It is now possible for a client to reuse a connection after sending
+  a chunked request.
 - If a client sends a malformed request, the server now responds with
   a 400 error instead of simply closing the connection.
 - ``Content-Length`` and ``Transfer-Encoding`` headers are no longer
@@ -167,10 +175,12 @@ Other notes
 - ``tornado.ioloop.TimeoutError`` is now an alias for
   `tornado.util.TimeoutError`.
 - `.IOLoop.instance` is now a deprecated alias for `.IOLoop.current`.
-- `.IOLoop.initialized`, `.IOLoop.install`, and
-  `.IOLoop.clear_instance` are all deprecated.
+- `.IOLoop.install` and `.IOLoop.clear_instance` are deprecated.
+- The ``IOLoop.initialized`` method has been removed.
 - On Python 3, the `asyncio`-backed `.IOLoop` is always used and
   alternative `.IOLoop` implementations cannot be configured.
+  `.IOLoop.current` and related methods pass through to
+  `asyncio.get_event_loop`.
 - `~.IOLoop.run_sync` cancels its argument on a timeout. This
   results in better stack traces (and avoids log messages about leaks)
   in native coroutines.
@@ -183,15 +193,19 @@ Other notes
 - The ``io_loop`` argument to `.PeriodicCallback` has been removed.
 - It is now possible to create a `.PeriodicCallback` in one thread
   and start it in another without passing an explicit event loop.
-- The `.IOLoop.set_blocking_signal_threshold` and
-  `.IOLoop.set_blocking_log_threshold` methods are deprecated because
+- The ``IOLoop.set_blocking_signal_threshold`` and
+  ``IOLoop.set_blocking_log_threshold`` methods are deprecated because
   they are not implemented for the `asyncio` event loop`. Use the
   ``PYTHONASYNCIODEBUG=1`` environment variable instead.
+- `.IOLoop.clear_current` now works if it is called before any
+  current loop is established.
 
 `tornado.iostream`
 ~~~~~~~~~~~~~~~~~~
 
 - The ``io_loop`` argument to the `.IOStream` constructor has been removed.
+- New method `.BaseIOStream.read_into` provides a minimal-copy alternative to
+  `.BaseIOStream.read_bytes`.
 - `.BaseIOStream.write` is now much more efficient for very large amounts of data.
 - Fixed some cases in which ``IOStream.error`` could be inaccurate.
 - Writing a `memoryview` can no longer result in "BufferError:
@@ -228,9 +242,12 @@ Other notes
   when appropriate; referencing them explicitly is no longer
   recommended.
 - Starting an `.IOLoop` or making it current now also sets the
-  `asyncio` event loop for the current thread.
+  `asyncio` event loop for the current thread. Closing an `.IOLoop`
+  closes the corresponding `asyncio` event loop.
 - `.to_tornado_future` and `.to_asyncio_future` are deprecated since
   they are now no-ops.
+- `~.AnyThreadEventLoopPolicy` can now be used to easily allow the creation
+  of event loops on any thread (similar to Tornado's prior policy).
 
 `tornado.platform.caresresolver`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -240,8 +257,8 @@ Other notes
 `tornado.platform.twisted`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- The ``io_loop`` arguments to `.TornadoReactor`, `.TwistedResolver`,
-  and `tornado.platform.twisted.install` have been removed.
+- The ``io_loop`` arguments to ``TornadoReactor``, `.TwistedResolver`,
+  and ``tornado.platform.twisted.install`` have been removed.
 
 `tornado.process`
 ~~~~~~~~~~~~~~~~~
@@ -282,6 +299,9 @@ Other notes
 - The deprecated ``tornado.testing.get_unused_port`` and
   ``tornado.testing.LogTrapTestCase`` have been removed.
 - `.AsyncHTTPTestCase.fetch` now supports absolute URLs.
+- `.AsyncHTTPTestCase.fetch` now connects to ``127.0.0.1``
+  instead of ``localhost`` to be more robust against faulty
+  ipv6 configurations.
 
 `tornado.util`
 ~~~~~~~~~~~~~~
@@ -301,6 +321,8 @@ Other notes
   garbage collection.
 - `.RedirectHandler` now copies any query arguments from the request
   to the redirect location.
+- If both ``If-None-Match`` and ``If-Modified-Since`` headers are present
+  in a request to `.StaticFileHandler`, the latter is now ignored.
 
 `tornado.websocket`
 ~~~~~~~~~~~~~~~~~~~
@@ -309,7 +331,6 @@ Other notes
   improve performance.
 - Requests with invalid websocket headers now get a response with
   status code 400 instead of a closed connection.
-- `.WebSocketHandler.write_message` now raises `.StreamClosedError` if
-  called after the connection is closed.
-  TODO(bdarnell): fix this up with WebSocketClosedError
+- `.WebSocketHandler.write_message` now raises `.WebSocketClosedError` if
+  the connection closes while the write is in progress.
 - The ``io_loop`` argument to `.websocket_connect` has been removed.

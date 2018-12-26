@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 r"""Installs files needed for tornado testing on windows.
 
 These instructions are compatible with the VMs provided by http://modern.ie.
@@ -19,7 +21,6 @@ To run the tests with tox, cd to e:\maint\vm\windows and run
 To run under cygwin (which must be installed separately), run
   cd /cygdrive/e; python -m tornado.test.runtests
 """
-from __future__ import absolute_import, division, print_function
 
 import os
 import subprocess

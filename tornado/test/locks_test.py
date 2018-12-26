@@ -10,29 +10,30 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-
-from __future__ import absolute_import, division, print_function
 from datetime import timedelta
+import typing  # noqa: F401
+import unittest
 
 from tornado import gen, locks
 from tornado.gen import TimeoutError
 from tornado.testing import gen_test, AsyncTestCase
-from tornado.test.util import unittest, skipBefore35, exec_test
 
 
 class ConditionTest(AsyncTestCase):
     def setUp(self):
         super(ConditionTest, self).setUp()
-        self.history = []
+        self.history = []  # type: typing.List[typing.Union[int, str]]
 
     def record_done(self, future, key):
         """Record the resolution of a Future returned by Condition.wait."""
+
         def callback(_):
             if not future.result():
                 # wait() resolved to False, meaning it timed out.
-                self.history.append('timeout')
+                self.history.append("timeout")
             else:
                 self.history.append(key)
+
         future.add_done_callback(callback)
 
     def loop_briefly(self):
@@ -47,10 +48,10 @@ class ConditionTest(AsyncTestCase):
 
     def test_repr(self):
         c = locks.Condition()
-        self.assertIn('Condition', repr(c))
-        self.assertNotIn('waiters', repr(c))
+        self.assertIn("Condition", repr(c))
+        self.assertNotIn("waiters", repr(c))
         c.wait()
-        self.assertIn('waiters', repr(c))
+        self.assertIn("waiters", repr(c))
 
     @gen_test
     def test_notify(self):
@@ -60,16 +61,15 @@ class ConditionTest(AsyncTestCase):
 
     def test_notify_1(self):
         c = locks.Condition()
-        self.record_done(c.wait(), 'wait1')
-        self.record_done(c.wait(), 'wait2')
+        self.record_done(c.wait(), "wait1")
+        self.record_done(c.wait(), "wait2")
         c.notify(1)
         self.loop_briefly()
-        self.history.append('notify1')
+        self.history.append("notify1")
         c.notify(1)
         self.loop_briefly()
-        self.history.append('notify2')
-        self.assertEqual(['wait1', 'notify1', 'wait2', 'notify2'],
-                         self.history)
+        self.history.append("notify2")
+        self.assertEqual(["wait1", "notify1", "wait2", "notify2"], self.history)
 
     def test_notify_n(self):
         c = locks.Condition()
@@ -95,12 +95,10 @@ class ConditionTest(AsyncTestCase):
 
         c.notify_all()
         self.loop_briefly()
-        self.history.append('notify_all')
+        self.history.append("notify_all")
 
         # Callbacks execute in the order they were registered.
-        self.assertEqual(
-            list(range(4)) + ['notify_all'],
-            self.history)
+        self.assertEqual(list(range(4)) + ["notify_all"], self.history)  # type: ignore
 
     @gen_test
     def test_wait_timeout(self):
@@ -134,15 +132,15 @@ class ConditionTest(AsyncTestCase):
 
         # Wait for callback 1 to time out.
         yield gen.sleep(0.02)
-        self.assertEqual(['timeout'], self.history)
+        self.assertEqual(["timeout"], self.history)
 
         c.notify(2)
         yield gen.sleep(0.01)
-        self.assertEqual(['timeout', 0, 2], self.history)
-        self.assertEqual(['timeout', 0, 2], self.history)
+        self.assertEqual(["timeout", 0, 2], self.history)
+        self.assertEqual(["timeout", 0, 2], self.history)
         c.notify()
         yield
-        self.assertEqual(['timeout', 0, 2, 3], self.history)
+        self.assertEqual(["timeout", 0, 2, 3], self.history)
 
     @gen_test
     def test_notify_all_with_timeout(self):
@@ -153,11 +151,11 @@ class ConditionTest(AsyncTestCase):
 
         # Wait for callback 1 to time out.
         yield gen.sleep(0.02)
-        self.assertEqual(['timeout'], self.history)
+        self.assertEqual(["timeout"], self.history)
 
         c.notify_all()
         yield
-        self.assertEqual(['timeout', 0, 2], self.history)
+        self.assertEqual(["timeout", 0, 2], self.history)
 
     @gen_test
     def test_nested_notify(self):
@@ -198,11 +196,11 @@ class ConditionTest(AsyncTestCase):
 class EventTest(AsyncTestCase):
     def test_repr(self):
         event = locks.Event()
-        self.assertTrue('clear' in str(event))
-        self.assertFalse('set' in str(event))
+        self.assertTrue("clear" in str(event))
+        self.assertFalse("set" in str(event))
         event.set()
-        self.assertFalse('clear' in str(event))
-        self.assertTrue('set' in str(event))
+        self.assertFalse("clear" in str(event))
+        self.assertTrue("set" in str(event))
 
     def test_event(self):
         e = locks.Event()
@@ -248,13 +246,13 @@ class SemaphoreTest(AsyncTestCase):
 
     def test_repr(self):
         sem = locks.Semaphore()
-        self.assertIn('Semaphore', repr(sem))
-        self.assertIn('unlocked,value:1', repr(sem))
+        self.assertIn("Semaphore", repr(sem))
+        self.assertIn("unlocked,value:1", repr(sem))
         sem.acquire()
-        self.assertIn('locked', repr(sem))
-        self.assertNotIn('waiters', repr(sem))
+        self.assertIn("locked", repr(sem))
+        self.assertNotIn("waiters", repr(sem))
         sem.acquire()
-        self.assertIn('waiters', repr(sem))
+        self.assertIn("waiters", repr(sem))
 
     def test_acquire(self):
         sem = locks.Semaphore()
@@ -349,18 +347,16 @@ class SemaphoreContextManagerTest(AsyncTestCase):
         # Semaphore was released and can be acquired again.
         self.assertTrue(sem.acquire().done())
 
-    @skipBefore35
     @gen_test
     def test_context_manager_async_await(self):
         # Repeat the above test using 'async with'.
         sem = locks.Semaphore()
 
-        namespace = exec_test(globals(), locals(), """
         async def f():
             async with sem as yielded:
                 self.assertTrue(yielded is None)
-        """)
-        yield namespace['f']()
+
+        yield f()
 
         # Semaphore was released and can be acquired again.
         self.assertTrue(sem.acquire().done())
@@ -402,15 +398,15 @@ class SemaphoreContextManagerTest(AsyncTestCase):
         @gen.coroutine
         def f(index):
             with (yield sem.acquire()):
-                history.append('acquired %d' % index)
+                history.append("acquired %d" % index)
                 yield gen.sleep(0.01)
-                history.append('release %d' % index)
+                history.append("release %d" % index)
 
         yield [f(i) for i in range(2)]
 
         expected_history = []
         for i in range(2):
-            expected_history.extend(['acquired %d' % i, 'release %d' % i])
+            expected_history.extend(["acquired %d" % i, "release %d" % i])
 
         self.assertEqual(expected_history, history)
 
@@ -480,7 +476,6 @@ class LockTests(AsyncTestCase):
         yield futures
         self.assertEqual(list(range(N)), history)
 
-    @skipBefore35
     @gen_test
     def test_acquire_fifo_async_with(self):
         # Repeat the above test using `async with lock:`
@@ -490,12 +485,11 @@ class LockTests(AsyncTestCase):
         N = 5
         history = []
 
-        namespace = exec_test(globals(), locals(), """
         async def f(idx):
             async with lock:
                 history.append(idx)
-        """)
-        futures = [namespace['f'](i) for i in range(N)]
+
+        futures = [f(i) for i in range(N)]
         lock.release()
         yield futures
         self.assertEqual(list(range(N)), history)
@@ -533,5 +527,5 @@ class LockTests(AsyncTestCase):
                 pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
